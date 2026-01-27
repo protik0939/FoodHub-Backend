@@ -13,11 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model FirstModel {
-  id   String @id @default(uuid())
-  name String
-}
-
 model User {
   id            String    @id
   name          String
@@ -28,6 +23,9 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+
+  role          String @default("CUSTOMER")
+  accountStatus String @default("ACTIVE")
 
   @@unique([email])
   @@map("user")
@@ -79,4 +77,129 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model UserProfile {
+  id                String    @id @default(uuid())
+  firstName         String    @db.VarChar(255)
+  lastName          String    @db.VarChar(255)
+  dateOfBirth       DateTime?
+  address           String?   @db.Text
+  contactNo         String?   @db.VarChar(50)
+
+  userId String @unique
+
+  orders  Order[]
+  reviews Review[]
+
+  @@map("userProfile")
+}
+
+model ProviderProfile {
+  id               String  @id @default(uuid())
+  providerName     String  @db.VarChar(255)
+  providerEmail    String  @db.VarChar(255)
+  providerContact  String  @db.VarChar(50)
+  providerAddress  String  @db.Text
+
+  ownerName  String @db.VarChar(255)
+  ownerEmail String @db.VarChar(255)
+
+  userId String @unique
+
+  meals Meal[]
+
+  @@map("providerProfile")
+}
+
+model AdminProfile {
+  id                String @id @default(uuid())
+  name              String @db.VarChar(255)
+  contact           String @db.VarChar(50)
+
+  userId String @unique
+
+  @@map("adminProfile")
+}
+
+model Category {
+  id          String @id @default(uuid())
+  name        String? @db.VarChar(255)
+  description String @db.Text
+
+  meals Meal[]
+
+  @@map("categories")
+}
+
+model Meal {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  price       Float
+  quantity    String   @db.VarChar(255)
+  imageUrl    String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId String
+  providerId String
+
+  category Category        @relation(fields: [categoryId], references: [id])
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+
+  orders  Order[]
+  reviews Review[]
+
+  @@map("meals")
+}
+
+model Order {
+  id     String      @id @default(uuid())
+  status OrderStatus @default(PREPARING)
+
+  userId String
+  mealId String
+
+  meal          Meal         @relation(fields: [mealId], references: [id])
+  userProfile   UserProfile? @relation(fields: [userProfileId], references: [id])
+  userProfileId String?
+
+  @@map("orders")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  reviewPoint Float
+  comment     String?  @db.Text
+  imageUrl    String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mealId String
+  userId String
+
+  meal          Meal         @relation(fields: [mealId], references: [id])
+  userProfile   UserProfile? @relation(fields: [userProfileId], references: [id])
+  userProfileId String?
+
+  @@map("review")
+}
+
+enum OrderStatus {
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
 }
