@@ -124,8 +124,8 @@ model AdminProfile {
 
 model Category {
   id          String @id @default(uuid())
-  name        String? @db.VarChar(255)
-  description String @db.Text
+  name        String @db.VarChar(255)
+  description String? @db.Text
 
   meals Meal[]
 
