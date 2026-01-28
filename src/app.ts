@@ -4,6 +4,7 @@ import { auth } from "./lib/auth";
 import cors from "cors";
 import { mealRouter } from "./modules/meal/meal.route";
 import { categoryRouter } from "./modules/category/category.route";
+import { providerRouter } from "./modules/profile/providerProfile/provider.route";
 
 const app: Application = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use("/meals", mealRouter);
 app.use("/categories", categoryRouter);
+app.use("/profile/providers", providerRouter)
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
 
