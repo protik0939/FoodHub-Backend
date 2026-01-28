@@ -24,8 +24,12 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role          String @default("CUSTOMER")
-  accountStatus String @default("ACTIVE")
+  role            String           @default("CUSTOMER")
+  accountStatus   String           @default("ACTIVE")
+  userProfile     UserProfile?
+  providerProfile ProviderProfile?
+  adminProfile    AdminProfile?
+  orders          Order[]
 
   @@unique([email])
   @@map("user")
@@ -80,32 +84,31 @@ model Verification {
 }
 
 model UserProfile {
-  id                String    @id @default(uuid())
-  firstName         String    @db.VarChar(255)
-  lastName          String    @db.VarChar(255)
-  dateOfBirth       DateTime?
-  address           String?   @db.Text
-  contactNo         String?   @db.VarChar(50)
+  id          String    @id @default(uuid())
+  firstName   String    @db.VarChar(255)
+  lastName    String    @db.VarChar(255)
+  dateOfBirth DateTime?
+  address     String?   @db.Text
+  contactNo   String?   @db.VarChar(50)
 
   userId String @unique
-
-  orders  Order[]
-  reviews Review[]
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("userProfile")
 }
 
 model ProviderProfile {
-  id               String  @id @default(uuid())
-  providerName     String  @db.VarChar(255)
-  providerEmail    String  @db.VarChar(255)
-  providerContact  String  @db.VarChar(50)
-  providerAddress  String  @db.Text
+  id              String @id @default(uuid())
+  providerName    String @db.VarChar(255)
+  providerEmail   String @db.VarChar(255)
+  providerContact String @db.VarChar(50)
+  providerAddress String @db.Text
 
   ownerName  String @db.VarChar(255)
   ownerEmail String @db.VarChar(255)
 
   userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   meals Meal[]
 
@@ -113,18 +116,19 @@ model ProviderProfile {
 }
 
 model AdminProfile {
-  id                String @id @default(uuid())
-  name              String @db.VarChar(255)
-  contact           String @db.VarChar(50)
+  id      String @id @default(uuid())
+  name    String @db.VarChar(255)
+  contact String @db.VarChar(50)
 
   userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("adminProfile")
 }
 
 model Category {
-  id          String @id @default(uuid())
-  name        String @db.VarChar(255)
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(255)
   description String? @db.Text
 
   meals Meal[]
@@ -148,8 +152,7 @@ model Meal {
   category Category        @relation(fields: [categoryId], references: [id])
   provider ProviderProfile @relation(fields: [providerId], references: [id])
 
-  orders  Order[]
-  reviews Review[]
+  orders Order[]
 
   @@map("meals")
 }
@@ -159,11 +162,12 @@ model Order {
   status OrderStatus @default(PREPARING)
 
   userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   mealId String
 
-  meal          Meal         @relation(fields: [mealId], references: [id])
-  userProfile   UserProfile? @relation(fields: [userProfileId], references: [id])
-  userProfileId String?
+  meal    Meal     @relation(fields: [mealId], references: [id])
+  reviews Review[]
 
   @@map("orders")
 }
@@ -176,12 +180,8 @@ model Review {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  mealId String
-  userId String
-
-  meal          Meal         @relation(fields: [mealId], references: [id])
-  userProfile   UserProfile? @relation(fields: [userProfileId], references: [id])
-  userProfileId String?
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("review")
 }

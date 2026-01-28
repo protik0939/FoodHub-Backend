@@ -5,6 +5,10 @@ import cors from "cors";
 import { mealRouter } from "./modules/meal/meal.route";
 import { categoryRouter } from "./modules/category/category.route";
 import { providerRouter } from "./modules/profile/providerProfile/provider.route";
+import { adminRouter } from "./modules/profile/adminProfile/admin.route";
+import { customerRouter } from "./modules/profile/customerProfile/customer.route";
+import { orderRouter } from "./modules/order/order.route";
+import { reviewRouter } from "./modules/review/review.route";
 
 const app: Application = express();
 
@@ -17,7 +21,12 @@ app.use(express.json());
 
 app.use("/meals", mealRouter);
 app.use("/categories", categoryRouter);
-app.use("/profile/providers", providerRouter)
+app.use("/profile/providers", providerRouter);
+app.use("/profile/admins", adminRouter);
+app.use("/profile/customers", customerRouter);
+app.use("/orders", orderRouter);
+app.use("/reviews", reviewRouter);
+
 
 app.all('/api/auth/{*any}', toNodeHandler(auth));
 
