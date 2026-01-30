@@ -28,7 +28,7 @@ app.use("/orders", orderRouter);
 app.use("/reviews", reviewRouter);
 
 
-app.all('/api/auth/{*any}', toNodeHandler(auth));
+app.all('/api/auth/*splat', toNodeHandler(auth));
 
 app.get("/", (req, res)=> {
     res.send("Welcome To FoodHub!");
