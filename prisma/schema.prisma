@@ -24,7 +24,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  role            String           @default("CUSTOMER")
+  role            String           @default("NONE")
   accountStatus   String           @default("ACTIVE")
   userProfile     UserProfile?
   providerProfile ProviderProfile?
@@ -197,6 +197,7 @@ enum UserRole {
   CUSTOMER
   PROVIDER
   ADMIN
+  NONE
 }
 
 enum UserStatus {

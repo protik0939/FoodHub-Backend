@@ -9,6 +9,7 @@ import { adminRouter } from "./modules/profile/adminProfile/admin.route";
 import { customerRouter } from "./modules/profile/customerProfile/customer.route";
 import { orderRouter } from "./modules/order/order.route";
 import { reviewRouter } from "./modules/review/review.route";
+import { roleSelectionRouter } from "./modules/roleSelection/role.route";
 
 const app: Application = express();
 
@@ -26,6 +27,7 @@ app.use("/profile/admins", adminRouter);
 app.use("/profile/customers", customerRouter);
 app.use("/orders", orderRouter);
 app.use("/reviews", reviewRouter);
+app.use("/select-role", roleSelectionRouter);
 
 
 app.all('/api/auth/*splat', toNodeHandler(auth));
