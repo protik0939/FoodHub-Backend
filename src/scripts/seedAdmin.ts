@@ -34,7 +34,7 @@ async function seedAdmin() {
 
     if (signUpAdmin.ok) {
       console.log("===== Admin created =====");
-      await prisma.user.update({
+      const updatedAdmin = await prisma.user.update({
         where: {
           email: adminData.email,
         },
@@ -44,6 +44,21 @@ async function seedAdmin() {
       });
 
       console.log("===== Email verification status updated! =====");
+
+      const existingAdminProfile = await prisma.adminProfile.findUnique({
+        where: { userId: updatedAdmin.id },
+      });
+
+      if (!existingAdminProfile) {
+        await prisma.adminProfile.create({
+          data: {
+            userId: updatedAdmin.id,
+            name: null,
+            contact: null,
+          },
+        });
+        console.log("===== Admin profile created =====");
+      }
     }
     console.log("===== SUCCESS =====");
   } catch (error) {

@@ -85,8 +85,8 @@ model Verification {
 
 model UserProfile {
   id          String    @id @default(uuid())
-  firstName   String    @db.VarChar(255)
-  lastName    String    @db.VarChar(255)
+  firstName   String?    @db.VarChar(255)
+  lastName    String?    @db.VarChar(255)
   dateOfBirth DateTime?
   address     String?   @db.Text
   contactNo   String?   @db.VarChar(50)
@@ -99,13 +99,13 @@ model UserProfile {
 
 model ProviderProfile {
   id              String @id @default(uuid())
-  providerName    String @db.VarChar(255)
-  providerEmail   String @db.VarChar(255)
-  providerContact String @db.VarChar(50)
-  providerAddress String @db.Text
+  providerName    String? @db.VarChar(255)
+  providerEmail   String? @db.VarChar(255)
+  providerContact String? @db.VarChar(50)
+  providerAddress String? @db.Text
 
-  ownerName  String @db.VarChar(255)
-  ownerEmail String @db.VarChar(255)
+  ownerName  String? @db.VarChar(255)
+  ownerEmail String? @db.VarChar(255)
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -117,8 +117,8 @@ model ProviderProfile {
 
 model AdminProfile {
   id      String @id @default(uuid())
-  name    String @db.VarChar(255)
-  contact String @db.VarChar(50)
+  name    String? @db.VarChar(255)
+  contact String? @db.VarChar(50)
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
