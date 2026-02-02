@@ -48,8 +48,31 @@ const getOrdersByUserId = async(req: Request, res: Response) => {
     }
 }
 
+const updateOrderStatus = async(req: Request, res: Response) => {
+    try{
+        const orderId = Array.isArray(req.params.orderId) 
+            ? req.params.orderId[0] 
+            : req.params.orderId;
+        const { status } = req.body;
+        if (orderId && status) {
+            const result = await orderService.updateOrderStatus(orderId, status);
+            res.status(200).json(result);
+        } else {
+            res.status(400).json({
+                error: "Missing orderId or status"
+            });
+        }
+    } catch(e) {
+        res.status(400).json({
+            error: "Something Went Wrong",
+            details: e
+        })
+    }
+}
+
 export const orderController = {
     createOrder,
     getOrdersByProviderId,
     getOrdersByUserId,
+    updateOrderStatus,
 }

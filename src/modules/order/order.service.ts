@@ -1,4 +1,4 @@
-import { Order } from "../../../generated/prisma/client";
+import { Order, OrderStatus } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
 
@@ -16,7 +16,9 @@ const getOrdersByProviderId = async (providerId: string) => {
     const result = await prisma.order.findMany({
         where: {
             meal: {
-                providerId,
+                provider: {
+                    userId: providerId,
+                },
             },
         },
         include: {
@@ -78,8 +80,42 @@ const getOrdersByUserId = async (userId: string) => {
     return result;
 }
 
+const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    const result = await prisma.order.update({
+        where: {
+            id: orderId,
+        },
+        data: {
+            status,
+        },
+        include: {
+            user: {
+                select: {
+                    name: true,
+                    email: true,
+                    userProfile: {
+                        select: {
+                            contactNo: true,
+                            address: true,
+                        },
+                    },
+                },
+            },
+            meal: {
+                select: {
+                    name: true,
+                    price: true,
+                    imageUrl: true,
+                },
+            },
+        },
+    });
+    return result;
+}
+
 export const orderService = {
     createOrder,
     getOrdersByProviderId,
     getOrdersByUserId,
+    updateOrderStatus,
 }

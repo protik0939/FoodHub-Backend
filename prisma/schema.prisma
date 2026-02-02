@@ -25,7 +25,7 @@ model User {
   accounts      Account[]
 
   role            String           @default("NONE")
-  accountStatus   String           @default("ACTIVE")
+  accountStatus   UserStatus       @default(ACTIVE)
   userProfile     UserProfile?
   providerProfile ProviderProfile?
   adminProfile    AdminProfile?
@@ -85,8 +85,8 @@ model Verification {
 
 model UserProfile {
   id          String    @id @default(uuid())
-  firstName   String?    @db.VarChar(255)
-  lastName    String?    @db.VarChar(255)
+  firstName   String?   @db.VarChar(255)
+  lastName    String?   @db.VarChar(255)
   dateOfBirth DateTime?
   address     String?   @db.Text
   contactNo   String?   @db.VarChar(50)
@@ -98,7 +98,7 @@ model UserProfile {
 }
 
 model ProviderProfile {
-  id              String @id @default(uuid())
+  id              String  @id @default(uuid())
   providerName    String? @db.VarChar(255)
   providerEmail   String? @db.VarChar(255)
   providerContact String? @db.VarChar(50)
@@ -116,7 +116,7 @@ model ProviderProfile {
 }
 
 model AdminProfile {
-  id      String @id @default(uuid())
+  id      String  @id @default(uuid())
   name    String? @db.VarChar(255)
   contact String? @db.VarChar(50)
 
@@ -158,11 +158,12 @@ model Meal {
 }
 
 model Order {
-  id     String      @id @default(uuid())
-  status OrderStatus @default(PREPARING)
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String         @id @default(uuid())
+  status        OrderStatus    @default(PREPARING)
+  quantity      Int            @default(1)
+  paymentMethod paymentMethods @default(CASHONDELIVERY)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   mealId String
 
@@ -203,4 +204,9 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   SUSPENDED
+}
+
+enum paymentMethods {
+  CASHONDELIVERY
+  OTHERS
 }
