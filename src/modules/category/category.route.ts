@@ -5,5 +5,6 @@ import auth, { UserRole } from '../../middlewares/auth';
 const router = express.Router();
 
 router.post("/", auth(UserRole.ADMIN, UserRole.PROVIDER), categoryController.createCategory);
+router.get("/", categoryController.getAllCategories);
 
 export const categoryRouter: Router = router;
