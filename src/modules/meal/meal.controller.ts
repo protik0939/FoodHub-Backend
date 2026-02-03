@@ -83,10 +83,34 @@ const deleteMeal = async (req: Request, res: Response) => {
   }
 };
 
+const getMealById = async (req: Request, res: Response) => {
+  try {
+    const mealId = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+    if (!mealId) {
+      res.status(400).json({ error: "Meal ID is required" });
+      return;
+    }
+    const result = await mealService.getMealById(mealId);
+    if (!result) {
+      res.status(404).json({ error: "Meal not found" });
+      return;
+    }
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e,
+    });
+  }
+};
+
 export const MealController = {
   createMeal,
   getAllMeals,
   getMealsByProviderId,
+  getMealById,
   updateMeal,
   deleteMeal,
 };
