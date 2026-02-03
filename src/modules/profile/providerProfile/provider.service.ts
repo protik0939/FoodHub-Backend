@@ -37,9 +37,46 @@ const updateProviderImage = async (id: string, image: string) => {
   return result;
 };
 
+const getAllProviders = async () => {
+  const result = await prisma.user.findMany({
+    where: {
+      role: "PROVIDER",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      image: true,
+      role: true,
+      accountStatus: true,
+      createdAt: true,
+      updatedAt: true,
+      providerProfile: {
+        select: {
+          id: true,
+          providerName: true,
+          providerEmail: true,
+          providerContact: true,
+          providerAddress: true,
+          ownerName: true,
+          ownerEmail: true,
+          _count: {
+            select: {
+              meals: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return result;
+};
+
 export const providerService = {
   createProvider,
   getProvider,
   updateProvider,
   updateProviderImage,
+  getAllProviders,
 };

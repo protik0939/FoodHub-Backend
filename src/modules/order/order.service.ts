@@ -72,6 +72,7 @@ const getOrdersByUserId = async (userId: string) => {
                     },
                 },
             },
+            reviews: true,
         },
         orderBy: {
             id: 'desc',
