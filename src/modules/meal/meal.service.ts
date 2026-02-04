@@ -37,6 +37,13 @@ const getAllMeals = async () => {
         select: {
           providerName: true,
           providerEmail: true,
+          user: {
+            select: {
+              name: true,
+              image: true,
+              id: true,
+            }
+          }
         },
       },
     },
@@ -121,11 +128,40 @@ const getMealById = async (mealId: string) => {
   return result;
 };
 
+const getMealByCategoryId = async (categoryId: string) => {
+  const result = await prisma.meal.findMany({
+    where: {
+      categoryId: categoryId,
+    },
+    include: {
+      category: true,
+      provider: {
+        select: {
+          providerName: true,
+          providerEmail: true,
+          user: {
+            select: {
+              name: true,
+              image: true,
+              id: true,
+            }
+          }
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  return result;
+};
+
 export const mealService = {
   createMeal,
   getAllMeals,
   getMealsByProviderId,
   getMealById,
+  getMealByCategoryId,
   updateMeal,
   deleteMeal,
 };

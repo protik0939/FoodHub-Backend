@@ -114,9 +114,60 @@ const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
     return result;
 }
 
+const cancelOrder = async (orderId: string, userId: string) => {
+    const order = await prisma.order.findUnique({
+        where: {
+            id: orderId,
+        },
+    });
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
+
+    if (order.userId !== userId) {
+        throw new Error("Unauthorized to cancel this order");
+    }
+
+    if (order.status !== OrderStatus.PREPARING) {
+        throw new Error("Order can only be cancelled when in PREPARING status");
+    }
+
+    const result = await prisma.order.update({
+        where: {
+            id: orderId,
+        },
+        data: {
+            status: OrderStatus.CANCELLED,
+        },
+        include: {
+            meal: {
+                select: {
+                    name: true,
+                    price: true,
+                    imageUrl: true,
+                    provider: {
+                        select: {
+                            user: {
+                                select: {
+                                    name: true,
+                                    image: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            reviews: true,
+        },
+    });
+    return result;
+}
+
 export const orderService = {
     createOrder,
     getOrdersByProviderId,
     getOrdersByUserId,
     updateOrderStatus,
+    cancelOrder,
 }

@@ -106,11 +106,31 @@ const getMealById = async (req: Request, res: Response) => {
   }
 };
 
+const getMealByCategoryId = async (req: Request, res: Response) => {
+  try {
+    const categoryId = Array.isArray(req.params.categoryId)
+      ? req.params.categoryId[0]
+      : req.params.categoryId;
+    if (!categoryId) {
+      res.status(400).json({ error: "Category ID is required" });
+      return;
+    }
+    const result = await mealService.getMealByCategoryId(categoryId);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e,
+    });
+  }
+};
+
 export const MealController = {
   createMeal,
   getAllMeals,
   getMealsByProviderId,
   getMealById,
+  getMealByCategoryId,
   updateMeal,
   deleteMeal,
 };
