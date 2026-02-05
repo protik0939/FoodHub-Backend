@@ -533,6 +533,7 @@ var auth2 = (...roles) => {
       const session = await auth.api.getSession({
         headers: req.headers
       });
+      console.log(session);
       if (!session) {
         return res.status(401).json({
           success: false,
@@ -553,6 +554,7 @@ var auth2 = (...roles) => {
         emailVerified: session.user.emailVerified,
         accountStatus: session.user.accountStatus
       };
+      console.log(req.user.role);
       if (roles.length && !roles.includes(req.user.role)) {
         return res.status(403).json({
           success: false,
