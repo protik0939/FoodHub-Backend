@@ -98,10 +98,24 @@ var transporter = nodemailer.createTransport({
 var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
-    // or "mysql", "postgresql", ...etc
   }),
-  trustedOrigins: [process.env.APP_URL],
+  trustedOrigins: [process.env.APP_URL, process.env.PROD_APP_URL],
   baseURL: process.env.BETTER_AUTH_URL,
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60
+      // 5 minutes
+    }
+  },
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: process.env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: false
+    },
+    disableCSRFCheck: true
+  },
   user: {
     additionalFields: {
       role: {
@@ -2246,10 +2260,28 @@ var adminRoute = router9;
 
 // src/app.ts
 var app = express9();
-app.use(cors({
-  origin: process.env.APP_URL,
-  credentials: true
-}));
+var allowedOrigins = [
+  process.env.APP_URL || "http://localhost:3000",
+  process.env.PROD_APP_URL
+  // Production frontend URL
+].filter(Boolean);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed = allowedOrigins.includes(origin);
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
+  })
+);
 app.use(express9.json());
 app.use("/meals", mealRouter);
 app.use("/categories", categoryRouter);
