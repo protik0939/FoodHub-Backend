@@ -14,10 +14,30 @@ import { adminRoute } from "./modules/admin/admin.route";
 
 const app: Application = express();
 
-app.use(cors({
-    origin: process.env.APP_URL,
-    credentials: true
-}))
+const allowedOrigins = [
+  process.env.APP_URL || "http://localhost:3000",
+  process.env.PROD_APP_URL, // Production frontend URL
+].filter(Boolean); // Remove undefined values
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed =
+        allowedOrigins.includes(origin)
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
+  }),
+);
 
 app.use(express.json());
 
@@ -31,11 +51,10 @@ app.use("/reviews", reviewRouter);
 app.use("/select-role", roleSelectionRouter);
 app.use("/admin", adminRoute);
 
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
-app.all('/api/auth/*splat', toNodeHandler(auth));
-
-app.get("/", (req, res)=> {
-    res.send("Welcome To FoodHub!");
-})
+app.get("/", (req, res) => {
+  res.send("Welcome To FoodHub!");
+});
 
 export default app;
