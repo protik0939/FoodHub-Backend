@@ -114,7 +114,14 @@ var auth = betterAuth({
     crossSubDomainCookies: {
       enabled: false
     },
-    disableCSRFCheck: true
+    disableCSRFCheck: true,
+    generateSessionToken: void 0,
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      path: "/"
+    }
   },
   user: {
     additionalFields: {
@@ -2260,16 +2267,19 @@ var adminRoute = router9;
 
 // src/app.ts
 var app = express9();
-var allowedOrigins = [
-  process.env.APP_URL || "http://localhost:3000",
-  process.env.PROD_APP_URL
-  // Production frontend URL
-].filter(Boolean);
+var allowedOrigins = new Set(
+  [
+    process.env.APP_URL || "http://localhost:3000",
+    process.env.PROD_APP_URL
+    // Production frontend URL
+  ].filter(Boolean)
+  // Remove undefined values
+);
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.includes(origin);
+      const isAllowed = allowedOrigins.has(origin);
       if (isAllowed) {
         callback(null, true);
       } else {
