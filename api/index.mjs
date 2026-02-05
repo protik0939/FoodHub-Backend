@@ -108,6 +108,7 @@ var auth = betterAuth({
       // 5 minutes
     }
   },
+  secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     cookiePrefix: "better-auth",
     useSecureCookies: process.env.NODE_ENV === "production",
@@ -147,7 +148,7 @@ var auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
-        const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+        const verificationUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.NEXT_PUBLIC_PROD_APP_URL}`;
         const info = await transporter.sendMail({
           from: '"Food Hub" <protik0939@gmail.com>',
           to: user.email,
@@ -533,7 +534,10 @@ var auth2 = (...roles) => {
       const session = await auth.api.getSession({
         headers: req.headers
       });
-      console.log("Ei holo session: ", session);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Session:", session);
+        console.log("Cookie header:", req.headers.cookie);
+      }
       if (!session) {
         return res.status(401).json({
           success: false,
@@ -2281,20 +2285,17 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.has(origin);
+      const isAllowed = allowedOrigins.has(origin) || /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
       if (isAllowed) {
         callback(null, true);
       } else {
-        console.error(`CORS blocked origin: ${origin}`);
         callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Set-Cookie"],
-    exposedHeaders: ["Set-Cookie"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    exposedHeaders: ["Set-Cookie"]
   })
 );
 app.use(express9.json());

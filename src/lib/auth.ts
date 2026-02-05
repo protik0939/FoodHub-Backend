@@ -65,7 +65,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
-        const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+        const verificationUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.NEXT_PUBLIC_PROD_APP_URL}`;
 
         const info = await transporter.sendMail({
           from: '"Food Hub" <protik0939@gmail.com>',
