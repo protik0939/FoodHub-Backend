@@ -32,6 +32,13 @@ export const auth = betterAuth({
       enabled: false,
     },
     disableCSRFCheck: true,
+    generateSessionToken: undefined,
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      path: "/",
+    },
   },
   user: {
     additionalFields: {

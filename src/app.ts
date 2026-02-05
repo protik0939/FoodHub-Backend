@@ -14,17 +14,18 @@ import { adminRoute } from "./modules/admin/admin.route";
 
 const app: Application = express();
 
-const allowedOrigins = [
-  process.env.APP_URL || "http://localhost:3000",
-  process.env.PROD_APP_URL, // Production frontend URL
-].filter(Boolean); // Remove undefined values
+const allowedOrigins = new Set(
+  [
+    process.env.APP_URL || "http://localhost:3000",
+    process.env.PROD_APP_URL, // Production frontend URL
+  ].filter(Boolean) // Remove undefined values
+);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed =
-        allowedOrigins.includes(origin)
+      const isAllowed = allowedOrigins.has(origin);
 
       if (isAllowed) {
         callback(null, true);
