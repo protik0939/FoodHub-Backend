@@ -25,11 +25,12 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
+  secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     cookiePrefix: "better-auth",
     useSecureCookies: process.env.NODE_ENV === "production",
     crossSubDomainCookies: {
-      enabled: false,
+      enabled: true,
     },
     disableCSRFCheck: true,
     generateSessionToken: undefined,
