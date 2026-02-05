@@ -18,30 +18,31 @@ const allowedOrigins = new Set(
   [
     process.env.APP_URL || "http://localhost:3000",
     process.env.PROD_APP_URL, // Production frontend URL
-  ].filter(Boolean) // Remove undefined values
+  ].filter(Boolean), // Remove undefined values
 );
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
+      // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
-      
-      const isAllowed = allowedOrigins.has(origin);
+
+      // Check if origin is in allowedOrigins or matches Vercel preview pattern
+      const isAllowed =
+        allowedOrigins.has(origin) ||
+        /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin); // Any Vercel deployment
 
       if (isAllowed) {
         callback(null, true);
       } else {
-        console.error(`CORS blocked origin: ${origin}`);
         callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Set-Cookie"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     exposedHeaders: ["Set-Cookie"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
   }),
 );
 

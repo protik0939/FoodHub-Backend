@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, includes } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import nodemailer from "nodemailer";
@@ -30,7 +30,7 @@ export const auth = betterAuth({
     cookiePrefix: "better-auth",
     useSecureCookies: process.env.NODE_ENV === "production",
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false,
     },
     disableCSRFCheck: true,
     generateSessionToken: undefined,
