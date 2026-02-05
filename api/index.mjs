@@ -2283,13 +2283,16 @@ app.use(
       if (isAllowed) {
         callback(null, true);
       } else {
+        console.error(`CORS blocked origin: ${origin}`);
         callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-    exposedHeaders: ["Set-Cookie"]
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Set-Cookie"],
+    exposedHeaders: ["Set-Cookie"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   })
 );
 app.use(express9.json());
