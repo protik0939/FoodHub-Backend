@@ -76,7 +76,9 @@ const getReviewsByProviderId = async (providerId: string) => {
         where: {
             order: {
                 meal: {
-                    providerId: providerId
+                    provider: {
+                        userId: providerId
+                    }
                 }
             }
         },
