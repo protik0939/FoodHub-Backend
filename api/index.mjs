@@ -534,10 +534,8 @@ var auth2 = (...roles) => {
       const session = await auth.api.getSession({
         headers: req.headers
       });
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Session:", session);
-        console.log("Cookie header:", req.headers.cookie);
-      }
+      console.log("Session:", session);
+      console.log("Cookie header:", req.headers.cookie);
       if (!session) {
         return res.status(401).json({
           success: false,

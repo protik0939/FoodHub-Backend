@@ -28,11 +28,9 @@ const auth = (...roles: UserRole[]) => {
       const session = await betterAuth.api.getSession({
         headers: req.headers as any,
       });
-      
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Session:", session);
-        console.log("Cookie header:", req.headers.cookie);
-      }
+
+      console.log("Session:", session);
+      console.log("Cookie header:", req.headers.cookie);
 
       if (!session) {
         return res.status(401).json({
