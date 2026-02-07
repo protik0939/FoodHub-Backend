@@ -25,8 +25,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
     cookieCache: {
-      enabled: true,
-      maxAge: 1,
+      enabled: false,
     },
   },
   secret: process.env.BETTER_AUTH_SECRET,
@@ -69,7 +68,8 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
-        const verificationUrl = `${process.env.BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.PROD_APP_URL}`;
+        const verificationBaseUrl = process.env.PROD_APP_URL || process.env.APP_URL;
+        const verificationUrl = `${verificationBaseUrl}/verify-email?token=${token}`;
 
         const info = await transporter.sendMail({
           from: '"Food Hub" <protik0939@gmail.com>',
