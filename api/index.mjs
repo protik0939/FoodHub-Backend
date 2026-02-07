@@ -99,7 +99,11 @@ var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
   }),
-  trustedOrigins: [process.env.APP_URL, process.env.PROD_APP_URL],
+  trustedOrigins: [
+    process.env.APP_URL,
+    process.env.PROD_APP_URL,
+    /^https:\/\/.*\.vercel\.app$/
+  ],
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
     cookieCache: {
@@ -148,7 +152,7 @@ var auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
-        const verificationUrl = `${process.env.NEXT_PUBLIC_BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.NEXT_PUBLIC_PROD_APP_URL}`;
+        const verificationUrl = `${process.env.BETTER_AUTH_URL}/api/auth/verify-email?token=${token}&callbackURL=${process.env.PROD_APP_URL}`;
         const info = await transporter.sendMail({
           from: '"Food Hub" <protik0939@gmail.com>',
           to: user.email,
