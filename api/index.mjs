@@ -113,7 +113,7 @@ var auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     cookiePrefix: "better-auth",
-    useSecureCookies: false,
+    useSecureCookies: process.env.NODE_ENV === "production",
     crossSubDomainCookies: {
       enabled: false
     },
