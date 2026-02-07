@@ -20,14 +20,13 @@ export const auth = betterAuth({
   trustedOrigins: [
     process.env.APP_URL!,
     process.env.PROD_APP_URL!,
-    /^https:\/\/.*\.vercel\.app$/,
   ],
 
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+      maxAge: 1,
     },
   },
   secret: process.env.BETTER_AUTH_SECRET,

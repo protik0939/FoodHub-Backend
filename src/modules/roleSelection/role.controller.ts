@@ -8,6 +8,11 @@ const updateRole = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "userId and role are required" });
     }
     const result = await roleSelectService.updateRole(userId, role);
+    
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     res.status(200).json(result);
   } catch (e) {
     res.status(400).json({

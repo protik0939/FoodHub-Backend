@@ -101,15 +101,13 @@ var auth = betterAuth({
   }),
   trustedOrigins: [
     process.env.APP_URL,
-    process.env.PROD_APP_URL,
-    /^https:\/\/.*\.vercel\.app$/
+    process.env.PROD_APP_URL
   ],
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60
-      // 5 minutes
+      maxAge: 1
     }
   },
   secret: process.env.BETTER_AUTH_SECRET,
@@ -1570,6 +1568,9 @@ var updateRole2 = async (req, res) => {
       return res.status(400).json({ error: "userId and role are required" });
     }
     const result = await roleSelectService.updateRole(userId, role);
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.status(200).json(result);
   } catch (e) {
     res.status(400).json({
