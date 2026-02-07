@@ -18,6 +18,7 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   trustedOrigins: [process.env.APP_URL!, process.env.PROD_APP_URL!],
+
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
     cookieCache: {

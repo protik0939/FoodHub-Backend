@@ -2271,19 +2271,16 @@ var adminRoute = router9;
 
 // src/app.ts
 var app = express9();
-var allowedOrigins = new Set(
-  [
-    process.env.APP_URL || "http://localhost:3000",
-    process.env.PROD_APP_URL
-    // Production frontend URL
-  ].filter(Boolean)
-  // Remove undefined values
-);
+var allowedOrigins = [
+  process.env.APP_URL || "http://localhost:3000",
+  process.env.PROD_APP_URL
+  // Production frontend URL
+].filter(Boolean);
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isAllowed = allowedOrigins.has(origin) || /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
+      const isAllowed = allowedOrigins.includes(origin) || /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
       if (isAllowed) {
         callback(null, true);
       } else {

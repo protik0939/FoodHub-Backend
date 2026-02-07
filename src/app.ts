@@ -14,12 +14,11 @@ import { adminRoute } from "./modules/admin/admin.route";
 
 const app: Application = express();
 
-const allowedOrigins = new Set(
-  [
-    process.env.APP_URL || "http://localhost:3000",
-    process.env.PROD_APP_URL, // Production frontend URL
-  ].filter(Boolean), // Remove undefined values
-);
+// Configure CORS to allow both production and Vercel preview deployments
+const allowedOrigins = [
+  process.env.APP_URL || "http://localhost:3000",
+  process.env.PROD_APP_URL, // Production frontend URL
+].filter(Boolean); // Remove undefined values
 
 app.use(
   cors({
@@ -29,7 +28,7 @@ app.use(
 
       // Check if origin is in allowedOrigins or matches Vercel preview pattern
       const isAllowed =
-        allowedOrigins.has(origin) ||
+        allowedOrigins.includes(origin) ||
         /^https:\/\/next-blog-client.*\.vercel\.app$/.test(origin) ||
         /^https:\/\/.*\.vercel\.app$/.test(origin); // Any Vercel deployment
 
