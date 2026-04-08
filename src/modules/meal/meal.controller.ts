@@ -125,12 +125,61 @@ const getMealByCategoryId = async (req: Request, res: Response) => {
   }
 };
 
+const getSearchSuggestions = async (req: Request, res: Response) => {
+  try {
+    const query = typeof req.query.q === "string" ? req.query.q : "";
+    const result = await mealService.getSearchSuggestions(query);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e,
+    });
+  }
+};
+
+const getTrendingMeals = async (_req: Request, res: Response) => {
+  try {
+    const result = await mealService.getTrendingMeals();
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e,
+    });
+  }
+};
+
+const getPersonalizedRecommendations = async (req: Request, res: Response) => {
+  try {
+    const userId = Array.isArray(req.params.userId)
+      ? req.params.userId[0]
+      : req.params.userId;
+
+    if (!userId) {
+      res.status(400).json({ error: "User ID is required" });
+      return;
+    }
+
+    const result = await mealService.getPersonalizedRecommendations(userId);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e,
+    });
+  }
+};
+
 export const MealController = {
   createMeal,
   getAllMeals,
   getMealsByProviderId,
   getMealById,
   getMealByCategoryId,
+  getSearchSuggestions,
+  getTrendingMeals,
+  getPersonalizedRecommendations,
   updateMeal,
   deleteMeal,
 };

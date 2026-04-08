@@ -13,6 +13,22 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const socialProvidersConfig: Record<string, unknown> = {
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID as string,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    prompt: "select_account consent",
+    accessType: "offline",
+  },
+};
+
+if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
+  socialProvidersConfig.facebook = {
+    clientId: process.env.FACEBOOK_CLIENT_ID,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+  };
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -165,12 +181,5 @@ export const auth = betterAuth({
       }
     },
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      prompt: "select_account consent",
-      accessType: "offline",
-    },
-  },
+  socialProviders: socialProvidersConfig,
 });

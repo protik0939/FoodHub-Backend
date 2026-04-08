@@ -95,6 +95,20 @@ var transporter = nodemailer.createTransport({
     pass: process.env.APP_PASS
   }
 });
+var socialProvidersConfig = {
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    prompt: "select_account consent",
+    accessType: "offline"
+  }
+};
+if (process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET) {
+  socialProvidersConfig.facebook = {
+    clientId: process.env.FACEBOOK_CLIENT_ID,
+    clientSecret: process.env.FACEBOOK_CLIENT_SECRET
+  };
+}
 var auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql"
@@ -244,14 +258,7 @@ var auth = betterAuth({
       }
     }
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      prompt: "select_account consent",
-      accessType: "offline"
-    }
-  }
+  socialProviders: socialProvidersConfig
 });
 
 // src/app.ts
@@ -401,12 +408,185 @@ var getMealByCategoryId = async (categoryId) => {
   });
   return result;
 };
+var getSearchSuggestions = async (query) => {
+  if (!query.trim()) {
+    return [];
+  }
+  const meals = await prisma.meal.findMany({
+    where: {
+      OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
+        { category: { name: { contains: query, mode: "insensitive" } } },
+        { provider: { providerName: { contains: query, mode: "insensitive" } } }
+      ]
+    },
+    include: {
+      category: {
+        select: {
+          name: true
+        }
+      },
+      provider: {
+        select: {
+          providerName: true
+        }
+      }
+    },
+    take: 8,
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+  const normalizedQuery = query.toLowerCase();
+  return meals.map((meal) => {
+    const nameScore = meal.name.toLowerCase().includes(normalizedQuery) ? 0.55 : 0;
+    const categoryScore = meal.category.name.toLowerCase().includes(normalizedQuery) ? 0.25 : 0;
+    const providerScore = meal.provider.providerName?.toLowerCase().includes(normalizedQuery) ? 0.2 : 0;
+    return {
+      id: meal.id,
+      label: meal.name,
+      category: meal.category.name,
+      provider: meal.provider.providerName,
+      confidence: Number((nameScore + categoryScore + providerScore).toFixed(2))
+    };
+  });
+};
+var getTrendingMeals = async () => {
+  const popularity = await prisma.order.groupBy({
+    by: ["mealId"],
+    _count: {
+      mealId: true
+    },
+    orderBy: {
+      _count: {
+        mealId: "desc"
+      }
+    },
+    take: 12
+  });
+  if (!popularity.length) {
+    return [];
+  }
+  const mealIds = popularity.map((item) => item.mealId);
+  const meals = await prisma.meal.findMany({
+    where: {
+      id: {
+        in: mealIds
+      }
+    },
+    include: {
+      category: true,
+      provider: {
+        select: {
+          providerName: true,
+          providerEmail: true,
+          user: {
+            select: {
+              name: true,
+              image: true,
+              id: true
+            }
+          }
+        }
+      }
+    }
+  });
+  const popularityMap = new Map(popularity.map((item) => [item.mealId, item._count.mealId]));
+  return meals.map((meal) => ({
+    ...meal,
+    trendScore: popularityMap.get(meal.id) || 0
+  })).sort((a, b) => b.trendScore - a.trendScore).slice(0, 8);
+};
+var getPersonalizedRecommendations = async (userId) => {
+  const userOrders = await prisma.order.findMany({
+    where: {
+      userId
+    },
+    include: {
+      meal: {
+        select: {
+          id: true,
+          categoryId: true,
+          price: true
+        }
+      }
+    },
+    take: 50,
+    orderBy: {
+      id: "desc"
+    }
+  });
+  if (!userOrders.length) {
+    return getTrendingMeals();
+  }
+  const preferredCategoryCounts = /* @__PURE__ */ new Map();
+  const previouslyOrderedMealIds = /* @__PURE__ */ new Set();
+  let totalSpent = 0;
+  userOrders.forEach((order) => {
+    preferredCategoryCounts.set(
+      order.meal.categoryId,
+      (preferredCategoryCounts.get(order.meal.categoryId) || 0) + 1
+    );
+    previouslyOrderedMealIds.add(order.meal.id);
+    totalSpent += order.quantity * order.meal.price;
+  });
+  const averageTicket = totalSpent / userOrders.length;
+  const categoryIds = Array.from(preferredCategoryCounts.keys());
+  const candidates = await prisma.meal.findMany({
+    where: {
+      OR: [
+        { categoryId: { in: categoryIds } },
+        { id: { notIn: Array.from(previouslyOrderedMealIds) } }
+      ]
+    },
+    include: {
+      category: true,
+      provider: {
+        select: {
+          providerName: true,
+          providerEmail: true,
+          user: {
+            select: {
+              name: true,
+              image: true,
+              id: true
+            }
+          }
+        }
+      },
+      _count: {
+        select: {
+          orders: true
+        }
+      }
+    },
+    take: 40,
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+  return candidates.map((meal) => {
+    const categoryWeight = (preferredCategoryCounts.get(meal.categoryId) || 0) * 1.2;
+    const popularityWeight = meal._count.orders * 0.4;
+    const priceWeight = Math.max(0, 20 - Math.abs(meal.price - averageTicket));
+    return {
+      ...meal,
+      recommendationScore: Number(
+        (categoryWeight + popularityWeight + priceWeight).toFixed(2)
+      )
+    };
+  }).sort((a, b) => b.recommendationScore - a.recommendationScore).slice(0, 8);
+};
 var mealService = {
   createMeal,
   getAllMeals,
   getMealsByProviderId,
   getMealById,
   getMealByCategoryId,
+  getSearchSuggestions,
+  getTrendingMeals,
+  getPersonalizedRecommendations,
   updateMeal,
   deleteMeal
 };
@@ -519,12 +699,54 @@ var getMealByCategoryId2 = async (req, res) => {
     });
   }
 };
+var getSearchSuggestions2 = async (req, res) => {
+  try {
+    const query = typeof req.query.q === "string" ? req.query.q : "";
+    const result = await mealService.getSearchSuggestions(query);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e
+    });
+  }
+};
+var getTrendingMeals2 = async (_req, res) => {
+  try {
+    const result = await mealService.getTrendingMeals();
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e
+    });
+  }
+};
+var getPersonalizedRecommendations2 = async (req, res) => {
+  try {
+    const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    if (!userId) {
+      res.status(400).json({ error: "User ID is required" });
+      return;
+    }
+    const result = await mealService.getPersonalizedRecommendations(userId);
+    res.status(200).json(result);
+  } catch (e) {
+    res.status(400).json({
+      error: "Something Went Wrong",
+      details: e
+    });
+  }
+};
 var MealController = {
   createMeal: createMeal2,
   getAllMeals: getAllMeals2,
   getMealsByProviderId: getMealsByProviderId2,
   getMealById: getMealById2,
   getMealByCategoryId: getMealByCategoryId2,
+  getSearchSuggestions: getSearchSuggestions2,
+  getTrendingMeals: getTrendingMeals2,
+  getPersonalizedRecommendations: getPersonalizedRecommendations2,
   updateMeal: updateMeal2,
   deleteMeal: deleteMeal2
 };
@@ -577,6 +799,9 @@ var auth_default = auth2;
 var router = express.Router();
 router.post("/", auth_default("ADMIN" /* ADMIN */, "PROVIDER" /* PROVIDER */), MealController.createMeal);
 router.get("/", MealController.getAllMeals);
+router.get("/ai/suggestions", MealController.getSearchSuggestions);
+router.get("/ai/trending", MealController.getTrendingMeals);
+router.get("/ai/recommendations/:userId", MealController.getPersonalizedRecommendations);
 router.get("/provider/:providerId", MealController.getMealsByProviderId);
 router.get("/category/:categoryId", MealController.getMealByCategoryId);
 router.get("/:id", MealController.getMealById);

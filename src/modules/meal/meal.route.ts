@@ -7,6 +7,9 @@ const router = express.Router();
 
 router.post("/", auth(UserRole.ADMIN, UserRole.PROVIDER), MealController.createMeal);
 router.get("/", MealController.getAllMeals);
+router.get("/ai/suggestions", MealController.getSearchSuggestions);
+router.get("/ai/trending", MealController.getTrendingMeals);
+router.get("/ai/recommendations/:userId", MealController.getPersonalizedRecommendations);
 router.get("/provider/:providerId", MealController.getMealsByProviderId);
 router.get("/category/:categoryId", MealController.getMealByCategoryId);
 router.get("/:id", MealController.getMealById);
