@@ -1,6 +1,13 @@
 import { Meal } from "../../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
+type GetAllMealsOptions = {
+  search?: string;
+  categoryId?: string;
+  page?: number;
+  limit?: number;
+};
+
 const createMeal = async (
   data: Omit<Meal, "createdAt" | "updatedAt">,
 ) => {
@@ -29,29 +36,92 @@ const createMeal = async (
   return result;
 };
 
-const getAllMeals = async () => {
-  const result = await prisma.meal.findMany({
-    include: {
-      category: true,
-      provider: {
-        select: {
-          providerName: true,
-          providerEmail: true,
-          user: {
-            select: {
-              name: true,
-              image: true,
-              id: true,
-            }
-          }
+const getAllMeals = async (options?: GetAllMealsOptions) => {
+  const search = options?.search?.trim() || "";
+  const categoryId = options?.categoryId;
+
+  const where = {
+    ...(categoryId ? { categoryId } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { description: { contains: search, mode: "insensitive" as const } },
+            { category: { name: { contains: search, mode: "insensitive" as const } } },
+            { provider: { providerName: { contains: search, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+
+  const include = {
+    category: true,
+    provider: {
+      select: {
+        providerName: true,
+        providerEmail: true,
+        user: {
+          select: {
+            name: true,
+            image: true,
+            id: true,
+          },
         },
       },
     },
+  };
+
+  const page = options?.page;
+  const limit = options?.limit;
+
+  if (page && limit) {
+    const [data, total] = await Promise.all([
+      prisma.meal.findMany({
+        where,
+        include,
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.meal.count({ where }),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  const data = await prisma.meal.findMany({
+    where,
+    include,
     orderBy: {
       createdAt: "desc",
     },
   });
-  return result;
+
+  return {
+    data,
+    meta: {
+      page: 1,
+      limit: data.length,
+      total: data.length,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    },
+  };
 };
 
 const getMealsByProviderId = async (providerId: string) => {

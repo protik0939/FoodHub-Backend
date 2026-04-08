@@ -290,29 +290,82 @@ var createMeal = async (data) => {
   });
   return result;
 };
-var getAllMeals = async () => {
-  const result = await prisma.meal.findMany({
-    include: {
-      category: true,
-      provider: {
-        select: {
-          providerName: true,
-          providerEmail: true,
-          user: {
-            select: {
-              name: true,
-              image: true,
-              id: true
-            }
+var getAllMeals = async (options) => {
+  const search = options?.search?.trim() || "";
+  const categoryId = options?.categoryId;
+  const where = {
+    ...categoryId ? { categoryId } : {},
+    ...search ? {
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { category: { name: { contains: search, mode: "insensitive" } } },
+        { provider: { providerName: { contains: search, mode: "insensitive" } } }
+      ]
+    } : {}
+  };
+  const include = {
+    category: true,
+    provider: {
+      select: {
+        providerName: true,
+        providerEmail: true,
+        user: {
+          select: {
+            name: true,
+            image: true,
+            id: true
           }
         }
       }
-    },
+    }
+  };
+  const page = options?.page;
+  const limit = options?.limit;
+  if (page && limit) {
+    const [data2, total] = await Promise.all([
+      prisma.meal.findMany({
+        where,
+        include,
+        orderBy: {
+          createdAt: "desc"
+        },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.meal.count({ where })
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    return {
+      data: data2,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    };
+  }
+  const data = await prisma.meal.findMany({
+    where,
+    include,
     orderBy: {
       createdAt: "desc"
     }
   });
-  return result;
+  return {
+    data,
+    meta: {
+      page: 1,
+      limit: data.length,
+      total: data.length,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false
+    }
+  };
 };
 var getMealsByProviderId = async (providerId) => {
   const providerProfile = await prisma.providerProfile.findUnique({
@@ -606,8 +659,22 @@ var createMeal2 = async (req, res) => {
 };
 var getAllMeals2 = async (req, res) => {
   try {
-    const result = await mealService.getAllMeals();
-    res.status(200).json(result);
+    const search = typeof req.query.search === "string" ? req.query.search : void 0;
+    const categoryId = typeof req.query.categoryId === "string" ? req.query.categoryId : void 0;
+    const page = Number(req.query.page);
+    const limit = Number(req.query.limit);
+    const hasPagination = Number.isFinite(page) && page > 0 && Number.isFinite(limit) && limit > 0;
+    const result = await mealService.getAllMeals({
+      search,
+      categoryId,
+      page: hasPagination ? page : void 0,
+      limit: hasPagination ? limit : void 0
+    });
+    if (hasPagination) {
+      res.status(200).json(result);
+      return;
+    }
+    res.status(200).json(result.data);
   } catch (e) {
     res.status(400).json({
       error: "Something Went Wrong",
@@ -780,7 +847,6 @@ var auth2 = (...roles) => {
         emailVerified: session.user.emailVerified,
         accountStatus: session.user.accountStatus
       };
-      console.log("Ei holo Role: ", req.user.role);
       if (roles.length && !roles.includes(req.user.role)) {
         return res.status(403).json({
           success: false,

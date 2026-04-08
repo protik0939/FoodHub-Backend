@@ -16,8 +16,27 @@ const createMeal = async (req: Request, res: Response) => {
 
 const getAllMeals = async (req: Request, res: Response) => {
   try {
-    const result = await mealService.getAllMeals();
-    res.status(200).json(result);
+    const search = typeof req.query.search === "string" ? req.query.search : undefined;
+    const categoryId = typeof req.query.categoryId === "string" ? req.query.categoryId : undefined;
+    const page = Number(req.query.page);
+    const limit = Number(req.query.limit);
+
+    const hasPagination = Number.isFinite(page) && page > 0 && Number.isFinite(limit) && limit > 0;
+
+    const options = {
+      ...(search ? { search } : {}),
+      ...(categoryId ? { categoryId } : {}),
+      ...(hasPagination ? { page, limit } : {}),
+    };
+
+    const result = await mealService.getAllMeals(options);
+
+    if (hasPagination) {
+      res.status(200).json(result);
+      return;
+    }
+
+    res.status(200).json(result.data);
   } catch (e) {
     res.status(400).json({
       error: "Something Went Wrong",
