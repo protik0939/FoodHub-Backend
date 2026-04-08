@@ -664,12 +664,12 @@ var getAllMeals2 = async (req, res) => {
     const page = Number(req.query.page);
     const limit = Number(req.query.limit);
     const hasPagination = Number.isFinite(page) && page > 0 && Number.isFinite(limit) && limit > 0;
-    const result = await mealService.getAllMeals({
-      search,
-      categoryId,
-      page: hasPagination ? page : void 0,
-      limit: hasPagination ? limit : void 0
-    });
+    const options = {
+      ...search ? { search } : {},
+      ...categoryId ? { categoryId } : {},
+      ...hasPagination ? { page, limit } : {}
+    };
+    const result = await mealService.getAllMeals(options);
     if (hasPagination) {
       res.status(200).json(result);
       return;
