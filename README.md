@@ -11,7 +11,7 @@
 
 **A robust REST API powering the FoodHub meal-ordering platform — built with Express, Prisma ORM, PostgreSQL (Neon), and Better Auth.**
 
-[Live API](https://food-hub-backend-teal.vercel.app) · [Frontend Repo](../foodhub-frontend/)
+[Live API](https://food-hub-backend-teal.vercel.app) · [Frontend Repo](https://github.com/protik0939/foodhub-frontend)
 
 </div>
 
